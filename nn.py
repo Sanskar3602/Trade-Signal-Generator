@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from orbreqd import ans, tenthirty, total
+from orb import ans, tenthirty, total
 
 class NeuralNetwork():
 
