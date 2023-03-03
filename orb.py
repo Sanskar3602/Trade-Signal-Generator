@@ -1,74 +1,83 @@
 import pandas as pd
 
-df = pd.read_csv('bn_2021_to_2022_sep.csv')
+# Training Data Calculations
+
+df = pd.read_csv('Train_data.csv')      # reading data from a file
 df.columns = ['date', 'open', 'high' ,'low', 'close', 'volume']
 
-tenthirty = []
-output = []
-no_of_days = int(len(df)/75) #75 candles of 5 min = 1 day
+# Calculating 10:30 movement
+ten_thirty = []
+no_of_days = int(len(df)/75)    # 75 candles of 5 min in one day
 for day in range(no_of_days):
-    #calculating 10:30 movement
-    total = 0
+    temp = 0
+    uptrend = 0         # green candle
+    downtrend = 0       # red candle
     for candle in range(15):
-        pos = 0
-        neg = 0
         a = df.iloc[day*75+candle].open
         b = df.iloc[day*75+candle].close
+        # if we are getting continuous uptrends, increase their value, same for downtrend
         if(a<b):
-            if(pos):
-                pos+=0.1
+            if(uptrend):
+                uptrend += 0.1
             else:
-                pos+=1
-                neg = 0
+                uptrend=1
+                downtrend = 0
         else:
-            if(neg):
-                neg+=0.1
+            if(downtrend):
+                downtrend += 0.1
             else:
-                neg += 1
-                pos = 0
-        total += (pos+neg)*(b-a)
-    tenthirty.append(total)
+                downtrend = 1
+                uptrend = 0
+        temp += (uptrend+downtrend)*(b-a)
+    ten_thirty.append(temp)
 
+# Calculating how much the market has gone from 10:30 to 3:30 in either upward 
+# or downward direction
+output = []
 for day in range(no_of_days):
-    #calculating output
     reqd = df.iloc[day*75+73].close - df.iloc[day*75+14].open
     output.append(reqd)
 
-ans = []
-count0 = 0
-count1 = 0
-count2 = 0
+# Calculating trends as upward, downward or cannot say(no trend)
+
+# We assumed that if the day end price has gone more than 100 in upward 
+# direction w.r.t 10:30 price, we will assume upward trend, same for downward 
+# trend, and if it lies in between, we cannot say anything for sure. 
 bar = 100
+observed_trend = [] # array to store trends for everyday after 10:30am
 for day in range(no_of_days):
     if(output[day]<(-bar)):
-        ans.append(0)
-        count2 += 1
+        observed_trend.append(0)           # downtrend
     elif(output[day]>bar):
-        ans.append(0.66)
-        count1 += 1
+        observed_trend.append(0.66)        # uptrend
     else:
-        ans.append(0.33)
-        count0 += 1
+        observed_trend.append(0.33)        # no trend
 
-df1 = pd.read_csv('data.csv')
+
+# Test Day Calculations
+
+
+df1 = pd.read_csv('Test_data.csv')
 df1.columns = ['date', 'open', 'high' ,'low', 'close', 'Adj cLose', 'volume']
 
-total = 0
-for candle in range(15):
-    pos = 0
-    neg = 0
+test_total = 0
+uptrend = 0
+downtrend = 0
+test_day_no = int(input("Choose any day between 0-6 to test the Neural Network:\n"))
+for candle in range(test_day_no*75, test_day_no*75+15):
     a = df1.iloc[candle].open
     b = df1.iloc[candle].close
     if(a<b):
-        if(pos):
-            pos+=0.1
+        if(uptrend):
+            uptrend += 0.1
         else:
-            pos+=1
-            neg = 0
+            uptrend=1
+            downtrend = 0
     else:
-        if(neg):
-            neg+=0.1
+        if(downtrend):
+            downtrend += 0.1
         else:
-            neg += 1
-            pos = 0
-    total += (pos+neg)*(b-a)
+            downtrend = 1
+            uptrend = 0
+    test_total += (uptrend+downtrend)*(b-a)
+print("The value of the day is calculated as: %.2f" %test_total)
